@@ -29,7 +29,9 @@ class DataLoader {
 		virtual Response getData() {
 			return Get(Url{ buildUrl() });
 		}
-		DataLoader() {}
+		DataLoader() {
+			this->URL_BASE = "https://ssd.jpl.nasa.gov/api/horizons.api?";
+		}
 		DataLoader(	string FORMAT,string COMMAND,string OBJ_DATA,string MAKE_EPHEM,string EPHEM_TYPE,string VECTOR,
 					string CENTER,string START_TIME,string STOP_TIME,string STEP_SIZE,string QUANTITIES) {
 			this->URL_BASE = "https://ssd.jpl.nasa.gov/api/horizons.api?";
@@ -49,7 +51,7 @@ class DataLoader {
 			string returnString;
 
 			returnString = this->URL_BASE;
-
+			cout << returnString << endl;
 			returnString = addPart(returnString, this->FORMAT);
 			returnString = addPart(returnString, this->COMMAND);
 			returnString = addPart(returnString, this->OBJ_DATA);
