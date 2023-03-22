@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <DataLoader.h>
+#include <DataParser.h>
 
 using namespace std;
 
@@ -54,9 +56,31 @@ void reshape(int width, int height) {
 }
 
 int main(int argc, char** argv) {
-	
-	glutInit(&argc, argv);
 
+	// obj_name=Mars&location=500@399&start_time=now&stop_time=+1d&step_size=1h
+
+	DataLoader loader = DataLoader();
+	loader.setFormat("format=text");
+	loader.setCommand("COMMAND='499'");
+	loader.setObjData("OBJ_DATA='YES'");
+	loader.setCenter("CENTER='500@399'");
+	loader.setStartTime("START_TIME='2006-01-01'");
+	loader.setStopTime("STOP_TIME='2006-01-20'");
+	loader.setStepSize("STEP_SIZE='1%20d'");
+	loader.setQuantities("QUANTITIES='1,9,20,23,24,29'");
+	loader.setMakeEphem("MAKE_EPHEM='YES'");
+	loader.setEphemType("EPHEM_TYPE='VECTOR'");
+
+	cout << loader.buildUrl() << endl;
+	string data = loader.getData().text;
+	cout << DataParser::parseData(data) << endl;
+	list<VectorData> vectorList = DataParser::parseDataVector(data);
+	for (auto v : vectorList) {
+		cout << v.toString() << endl;
+	}
+	glutInit(&argc, argv);
+	
+	/*
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_RGBA);
 	glutInitWindowSize(800, 600);
 	glutInitWindowPosition(10, 10);
@@ -66,6 +90,7 @@ int main(int argc, char** argv) {
 	glutReshapeFunc(reshape);
 	glEnable(GL_DEPTH_TEST);
 	glutMainLoop();
+	*/
 	return 0;
 
 }
