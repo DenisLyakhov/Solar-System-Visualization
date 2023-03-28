@@ -9,15 +9,15 @@
 using namespace std;
 
 
-const map<string, string> DefaultCelestialBodyData::MERCURY = { {"CENTER","199@399"} };
-const map<string, string> DefaultCelestialBodyData::VENUS = { {"CENTER","299@399"} };
-const map<string, string> DefaultCelestialBodyData::EARTH = { {"CENTER","399@399"} };
-const map<string, string> DefaultCelestialBodyData::MARS = { {"CENTER","499@399"} };
-const map<string, string> DefaultCelestialBodyData::JUPITER = { {"CENTER","599@399"} };
-const map<string, string> DefaultCelestialBodyData::SATURN = { {"CENTER","699@399"} };
-const map<string, string> DefaultCelestialBodyData::URANUS = { {"CENTER","799@399"} };
-const map<string, string> DefaultCelestialBodyData::NEPTUNE = { {"CENTER","899@399"} };
-const map<string, string> DefaultCelestialBodyData::SUN = { {"CENTER","10@399"} };
+const map<string, string> DefaultCelestialBodyData::MERCURY  ={{"CENTER","199@399"}};
+const map<string, string> DefaultCelestialBodyData::VENUS	 ={{"CENTER","299@399"}};
+const map<string, string> DefaultCelestialBodyData::EARTH	 ={{"CENTER","399@399"}};
+const map<string, string> DefaultCelestialBodyData::MARS	 ={{"CENTER","499@399"}};
+const map<string, string> DefaultCelestialBodyData::JUPITER  ={{"CENTER","599@399"}};
+const map<string, string> DefaultCelestialBodyData::SATURN   ={{"CENTER","699@399"}};
+const map<string, string> DefaultCelestialBodyData::URANUS	 ={{"CENTER","799@399"}};
+const map<string, string> DefaultCelestialBodyData::NEPTUNE  ={{"CENTER","899@399"}};
+const map<string, string> DefaultCelestialBodyData::SUN		 ={{"CENTER","10@399"}};
 
 
 double rotation = 0.0;
