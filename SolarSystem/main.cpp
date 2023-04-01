@@ -4,7 +4,7 @@
 #include <DataLoader.h>
 #include <DataParser.h>
 #include <Planet.h>
-#include<DefaultCelestialBodyData.h>
+#include <DefaultCelestialBodyData.h>
 
 using namespace std;
 
