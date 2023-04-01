@@ -64,15 +64,14 @@ class DataParser {
 			// Find X --> first parameter, 4 -> |X = |, second argument is difference between for example Y start and start of X so we calculate length of number
 			string xData = getDataFromLine(line, "X", "Y");
 			string yData = getDataFromLine(line, "Y", "Z");
-			string zData = getDataFromLine(line, "X");
-
+			string zData = getDataFromLine(line, "Z");
 			return { xData,yData,zData };
 		}
 		static array<string, 3> getVelocityArray(string line) {
 	
 			string xData = getDataFromLine(line,"VX","VY");
 			string yData = getDataFromLine(line, "VY", "VZ"); 
-			string zData = getDataFromLine(line, "VX");
+			string zData = getDataFromLine(line, "VZ");
 
 			return { xData,yData,zData };
 		}
