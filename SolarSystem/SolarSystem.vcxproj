@@ -128,6 +128,9 @@
   <ItemGroup>
     <ClInclude Include="ModelLoader\Model.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Uranus.glb" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
