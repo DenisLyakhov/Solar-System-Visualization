@@ -1,4 +1,11 @@
+#pragma once
+#define CURL_STATICLIB
 
+#include<iostream>
+#include <cpr/cpr.h>
+#include <sstream>
+
+using namespace std;
 using namespace cpr;
 class VectorData {
 	private:

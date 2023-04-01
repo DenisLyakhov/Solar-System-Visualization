@@ -31,16 +31,6 @@ class DataLoader {
 		}
 		DataLoader() {
 			this->URL_BASE = "https://ssd.jpl.nasa.gov/api/horizons.api?";
-			setFormat("text");
-			setCommand("1");
-			setMakeEphem("'YES'");
-			setEphemType("'VECTOR'");
-			setStartTime("'2006-01-01'");
-			setStopTime("'2006-01-20'");
-			setStepSize("'1%20d'");
-			setObjData("'YES'");
-			setCenter("");
-
 		}
 		DataLoader(	string FORMAT,string COMMAND,string OBJ_DATA,string MAKE_EPHEM,string EPHEM_TYPE,string VECTOR,
 					string CENTER,string START_TIME,string STOP_TIME,string STEP_SIZE,string QUANTITIES) {
@@ -61,6 +51,7 @@ class DataLoader {
 			string returnString;
 
 			returnString = this->URL_BASE;
+			cout << returnString << endl;
 			returnString = addPart(returnString, this->FORMAT);
 			returnString = addPart(returnString, this->COMMAND);
 			returnString = addPart(returnString, this->OBJ_DATA);
@@ -78,29 +69,18 @@ class DataLoader {
 
 		//Settery
 
-		void setFormat(string format) {this->FORMAT = "format=" + format; }
-		void setCommand(string command) {this->COMMAND = "COMMAND=" + command; }
-		void setObjData(string objData) {this->OBJ_DATA = "OBJ_DATA=" + objData; }
-		void setMakeEphem(string makeEphem) {this->MAKE_EPHEM = "MAKE_EPHEM=" + makeEphem; }
-		void setEphemType(string ephemType) {this->EPHEM_TYPE = "EPHEM_TYPE=" + ephemType; }
+		void setFormat(string format) {this->FORMAT = format;}
+		void setCommand(string command) {this->COMMAND = command;}
+		void setObjData(string objData) {this->OBJ_DATA = objData;}
+		void setMakeEphem(string makeEphem) {this->MAKE_EPHEM = makeEphem;}
+		void setEphemType(string ephemType) {this->EPHEM_TYPE = ephemType;}
 		void setVector(string vector) {this->VECTOR = vector;}
-		void setCenter(string center) {this->CENTER= "CENTER=" + center; }
-		void setStartTime(string startTime) {this->START_TIME = "START_TIME=" + startTime; }
-		void setStopTime(string stopTime) {this->STOP_TIME = "STOP_TIME=" + stopTime; }
-		void setStepSize(string stepSize) {this->STEP_SIZE = "STEP_SIZE=" + stepSize; }
-		void setQuantities(string quantities) {this->QUANTITIES = "QUANTITIES=" + quantities; }
-		/*
-		loader.setFormat("format=text");
-		loader.setCommand("COMMAND='499'");
-		loader.setObjData("OBJ_DATA='YES'");
-		loader.setCenter("CENTER='500@399'");
-		loader.setStartTime("START_TIME='2006-01-01'");
-		loader.setStopTime("STOP_TIME='2006-01-20'");
-		loader.setStepSize("STEP_SIZE='1%20d'");
-		loader.setQuantities("QUANTITIES='1,9,20,23,24,29'");
-		loader.setMakeEphem("MAKE_EPHEM='YES'");
-		loader.setEphemType("EPHEM_TYPE='VECTOR'");
-		*/
+		void setCenter(string center) {this->CENTER= center;}
+		void setStartTime(string startTime) {this->START_TIME = startTime;}
+		void setStopTime(string stopTime) {this->STOP_TIME = stopTime;}
+		void setStepSize(string stepSize) {this->STEP_SIZE = stepSize;}
+		void setQuantities(string quantities) {this->QUANTITIES = quantities;}
+		
 	private:
 		string addPart(string url,string urlPart) {
 			if (urlPart == "") return url;

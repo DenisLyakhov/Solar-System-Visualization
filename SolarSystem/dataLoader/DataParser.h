@@ -62,36 +62,28 @@ class DataParser {
 		//Parse coordinates from data
 		static array<string, 3> getCordinatesArray(string line) {
 			// Find X --> first parameter, 4 -> |X = |, second argument is difference between for example Y start and start of X so we calculate length of number
-			string xData = getDataFromLine(line, "X", "Y");
-			string yData = getDataFromLine(line, "Y", "Z");
-			string zData = getDataFromLine(line, "X");
+			string xData = line.substr(nthOccurrence(line, "X", 1)+4, nthOccurrence(line, "Y", 1) - (nthOccurrence(line, "X", 1) + 5) );
+			string yData = line.substr(nthOccurrence(line, "Y", 1)+4, nthOccurrence(line, "Z", 1) - (nthOccurrence(line, "Y", 1) + 5));
+			string zData = line.substr(nthOccurrence(line, "Z", 1)+4, line.length());
 
 			return { xData,yData,zData };
 		}
 		static array<string, 3> getVelocityArray(string line) {
-	
-			string xData = getDataFromLine(line,"VX","VY");
-			string yData = getDataFromLine(line, "VY", "VZ"); 
-			string zData = getDataFromLine(line, "VX");
+			
+			string xData = line.substr(nthOccurrence(line, "VX", 1) + 4, nthOccurrence(line, "VY", 1) - (nthOccurrence(line, "VX", 1) + 5));
+			string yData = line.substr(nthOccurrence(line, "VY", 1) + 4, nthOccurrence(line, "VZ", 1) - (nthOccurrence(line, "VY", 1) + 5));
+			string zData = line.substr(nthOccurrence(line, "VZ", 1) + 4, line.length());
 
 			return { xData,yData,zData };
 		}
 		static string getLT(string line) {
-			return  getDataFromLine(line, "LT", "RG");
+			return line.substr(nthOccurrence(line, "LT", 1) + 4, nthOccurrence(line, "RG", 1) - (nthOccurrence(line, "LT", 1) + 5));
 		}
 		static string getRG(string line) {
-			return  getDataFromLine(line, "RG", "RR");
+			return line.substr(nthOccurrence(line, "RG", 1) + 4, nthOccurrence(line, "RR", 1) - (nthOccurrence(line, "RG", 1) + 5));
 		}
 		static string getRR(string line) {
-			return getDataFromLine(line, "RR");
-		}
-
-		static string getDataFromLine(string line,string first, string second) {
-			return line.substr(nthOccurrence(line, first, 1) + 4, nthOccurrence(line, second, 1) - (nthOccurrence(line, first, 1) + 5));
-		}
-
-		static string getDataFromLine(string line, string first) {
-			return line.substr(nthOccurrence(line, first, 1) + 4, line.length());
+			return line.substr(nthOccurrence(line, "RR", 1) + 4, line.length());
 		}
 
 		static int nthOccurrence(const std::string& str, const std::string& findMe, int nth){
