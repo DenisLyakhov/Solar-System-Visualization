@@ -39,7 +39,7 @@ class DataLoader {
 			setStopTime("'2006-01-20'");
 			setStepSize("'1%20d'");
 			setObjData("'YES'");
-			setCenter("");
+			setCenter("500@10");
 
 		}
 		DataLoader(	string FORMAT,string COMMAND,string OBJ_DATA,string MAKE_EPHEM,string EPHEM_TYPE,string VECTOR,

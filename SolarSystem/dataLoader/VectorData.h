@@ -27,6 +27,19 @@ class VectorData {
 		string getRG(string RG) { this->RG = RG; }
 		string getRR(string RR) { this->RR = RR; }
 
+		array<double, 3> getCoordinatesNumerical() {
+			array<double, 3> coordinatesNumerical = { 0.0, 0.0, 0.0 };
+			double coord;
+
+			for (int i = 0; i < 3; i++) {
+				istringstream os(this->coordinates[i]);
+				os >> coord;
+				coordinatesNumerical[i] = coord;
+			}
+
+			return coordinatesNumerical;
+		}
+
 		string toString() {
 			return "{ date: " + date +
 				" x: " + coordinates[0] + " y: " + coordinates[1] + " z: " + coordinates[2] +
