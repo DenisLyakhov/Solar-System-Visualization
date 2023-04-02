@@ -86,11 +86,11 @@ class DataParser {
 		}
 
 		static string getDataFromLine(string line,string first, string second) {
-			return line.substr(nthOccurrence(line, first, 1) + 4, nthOccurrence(line, second, 1) - (nthOccurrence(line, first, 1) + 5));
+			return line.substr(nthOccurrence(line, first, 1) + 3, nthOccurrence(line, second, 1) - (nthOccurrence(line, first, 1) + 5) + 1);
 		}
 
 		static string getDataFromLine(string line, string first) {
-			return line.substr(nthOccurrence(line, first, 1) + 4, line.length());
+			return line.substr(nthOccurrence(line, first, 1) + 3, line.length());
 		}
 
 		static int nthOccurrence(const std::string& str, const std::string& findMe, int nth){

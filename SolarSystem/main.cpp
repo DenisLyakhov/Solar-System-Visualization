@@ -9,15 +9,15 @@
 using namespace std;
 
 
-const map<string, string> DefaultCelestialBodyData::MERCURY  ={{"CENTER","199@399"}};
-const map<string, string> DefaultCelestialBodyData::VENUS	 ={{"CENTER","299@399"}};
-const map<string, string> DefaultCelestialBodyData::EARTH	 ={{"CENTER","399@399"}};
-const map<string, string> DefaultCelestialBodyData::MARS	 ={{"CENTER","499@399"}};
-const map<string, string> DefaultCelestialBodyData::JUPITER  ={{"CENTER","599@399"}};
-const map<string, string> DefaultCelestialBodyData::SATURN   ={{"CENTER","699@399"}};
-const map<string, string> DefaultCelestialBodyData::URANUS	 ={{"CENTER","799@399"}};
-const map<string, string> DefaultCelestialBodyData::NEPTUNE  ={{"CENTER","899@399"}};
-const map<string, string> DefaultCelestialBodyData::SUN		 ={{"CENTER","10@399"}};
+const map<string, string> DefaultCelestialBodyData::MERCURY  ={{"COMMAND","199"}};
+const map<string, string> DefaultCelestialBodyData::VENUS	 ={{"COMMAND","299"}};
+const map<string, string> DefaultCelestialBodyData::EARTH	 ={{"COMMAND","399"}};
+const map<string, string> DefaultCelestialBodyData::MARS	 ={{"COMMAND","499"}};
+const map<string, string> DefaultCelestialBodyData::JUPITER  ={{"COMMAND","599"}};
+const map<string, string> DefaultCelestialBodyData::SATURN   ={{"COMMAND","699"}};
+const map<string, string> DefaultCelestialBodyData::URANUS	 ={{"COMMAND","799"}};
+const map<string, string> DefaultCelestialBodyData::NEPTUNE  ={{"COMMAND","899"}};
+const map<string, string> DefaultCelestialBodyData::SUN		 ={{"COMMAND","10"}};
 
 
 double rotation = 0.0;
@@ -70,14 +70,30 @@ void reshape(int width, int height) {
 
 int main(int argc, char** argv) {
 
+	array<Planet, 9> planets = { Planet("mercury"), Planet("venus"), Planet("earth"), Planet("mars"), Planet("jupiter"), Planet("saturn"), Planet("uranus"), Planet("neptune"), Planet("sun") };
 
-	Planet body = Planet("mars");
+
+	for (Planet planet : planets) {
+		VectorData vectorData = planet.getVectorData().front();
+		array<double, 3> coords = vectorData.getCoordinatesNumerical();
+
+		cout << planet.name << endl;
+
+		cout << coords[0] << endl;
+		cout << coords[1] << endl;
+		cout << coords[2] << endl;
+
+		cout << "------------" << endl;
+	}
+
+	/*Planet body = Planet("mercury");
 	list<VectorData> vectorList = body.getVectorData();
 
 
 	for (auto v : vectorList) {
 		cout << v.toString() << endl;
-	}
+	}*/
+
 	glutInit(&argc, argv);
 	
 	/*
