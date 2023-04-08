@@ -1,7 +1,10 @@
-#include <GL/glut.h>
-
+#define STB_IMAGE_IMPLEMENTATION
 #include <iostream>
 #include <stdlib.h>
+#include <Model.h>
+
+#include <GL/glut.h>
+
 
 using namespace std;
 
@@ -56,6 +59,9 @@ void reshape(int width, int height) {
 int main(int argc, char** argv) {
 	
 	glutInit(&argc, argv);
+	//D:\Studia\OpenGL\Projekt
+	Model model = Model("D:\\Uranus.glb", false);
+
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_RGBA);
 	glutInitWindowSize(800, 600);
