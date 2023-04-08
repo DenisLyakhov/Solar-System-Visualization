@@ -129,11 +129,9 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ModelLoader\Mesh.h" />
     <ClInclude Include="ModelLoader\Model.h">
       <FileType>CppHeader</FileType>
     </ClInclude>
-    <ClInclude Include="ModelLoader\Shader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Uranus.glb" />
