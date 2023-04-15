@@ -14,29 +14,40 @@ using namespace std;
 
 class Planet {
 
-
 	public:
 		string name;
 
-		Planet(string name) {
+		Planet(string name, double size) {
 			this->name = name;
+			this->size = size;
 			this->loader = createLoader(DefaultCelestialBodyData::getDefaultDataBasedOnName(name));
+			retrieveVectorData();
 		}
-		Planet(string name, map<string,string> arguments) {
+		Planet(string name, map<string,string> arguments, double size) {
 			this->name = name;
+			this->size = size;
 			this->loader = createLoader(arguments);
+			retrieveVectorData();
 		}
 
-
-		list<VectorData> getVectorData() {
+		void retrieveVectorData() {
 			string data = loader.getData().text;
-			return DataParser::parseDataVector(data);
+			this->vectorDataList = DataParser::parseDataVector(data);
 		}
 
 
-		string getName() { return name;}
-		DataLoader getLoader() { return this->loader;}
+		inline string getName() { return name; }
+		inline double getSize() { return size; }
+		inline DataLoader getLoader() { return this->loader; }
+
+		inline array<double, 3> getFirstCoordinates() {
+			return this->vectorDataList.front().getCoordinates();
+		}
 	private:
+		double size;
+
+		list<VectorData> vectorDataList;
+
 		DataLoader loader;
 		DataLoader createLoader(map<string,string> arguments) {
 			DataLoader loader = DataLoader();

@@ -1,6 +1,8 @@
 #include <GL/glut.h>
 #include <iostream>
 #include <stdlib.h>
+#include <list>
+
 #include <DataLoader.h>
 #include <DataParser.h>
 #include <Planet.h>
@@ -19,58 +21,67 @@ const map<string, string> DefaultCelestialBodyData::URANUS	 ={{"COMMAND","799"}}
 const map<string, string> DefaultCelestialBodyData::NEPTUNE  ={{"COMMAND","899"}};
 const map<string, string> DefaultCelestialBodyData::SUN		 ={{"COMMAND","10"}};
 
+list<Planet> planets;
 
 double rotation = 0.0;
+
+void reshape(int width, int height) {
+	glMatrixMode(GL_PROJECTION);
+	gluPerspective(50.0, width / (GLfloat)height, 3.0, 500.0);
+	glMatrixMode(GL_MODELVIEW);
+	gluLookAt(0.0, 0.0, 500.0,
+		0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0);
+}
 
 void init(void) {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glShadeModel(GL_FLAT);
 }
 
-void display(void) {
+double sunSize = 0.5;
+double planetSize = 0.5;
+double scale = 20000000.0;
+
+void renderPlanet(Planet &planet) {
+	array<double, 3> coordinates = planet.getFirstCoordinates();
+	double x = coordinates[0] / scale;
+	double y = coordinates[1] / scale;
+
+	glPushMatrix();
+	glColor3f(9.0, 9.0, 9.0);
+	glTranslatef(x, y, 0.0);
+	glutWireSphere(planet.getSize(), 10, 8);
+	glPopMatrix();
+}
+
+void renderMainScene(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (rotation < 360.0) {
-		rotation += 1.0;
+	for (Planet p : planets) {
+		renderPlanet(p);
 	}
-	else {
-		rotation = 0.0;
-	}
-
-	glPushMatrix();
-		glRotatef(90.0, 1, 0, 0);
-		glColor3f(9.0, 9.0, 9.0);
-		glTranslatef(0.0, 0.0, 0.0);
-		glRotatef(-rotation, 0, 0, 1);
-		glutWireSphere(0.5, 20, 16);
-	glPopMatrix();
-
-	glPushMatrix();
-		glRotatef(90.0, 1, 0, 0);
-		glColor3f(9.0, 9.0, 9.0);
-		glTranslatef(0.0, 0.0, 0.0);
-		glRotatef(-rotation, 0, 0, 1);
-		glTranslatef(2.0, 0, 0.0);
-		glutWireSphere(0.2, 10, 8);
-	glPopMatrix();
 
 	glutSwapBuffers();
 
 	glutPostRedisplay();
 }
 
-void reshape(int width, int height) {
-	glMatrixMode(GL_PROJECTION);
-	gluPerspective(50.0, width / (GLfloat)height, 3.0, 90.0);
-	glMatrixMode(GL_MODELVIEW);
-	gluLookAt(2.0, 2.0, 5.0, 
-		0.0, 0.0, 0.0, 
-		0.0, 1.0, 0.0);
+void displayWindow() {
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_RGBA);
+	glutInitWindowSize(1600, 900);
+	glutInitWindowPosition(10, 10);
+	glutCreateWindow("Solar System");
+	init();
+	glutDisplayFunc(renderMainScene);
+	glutReshapeFunc(reshape);
+	glEnable(GL_DEPTH_TEST);
+	glutMainLoop();
 }
 
 int main(int argc, char** argv) {
 
-	array<Planet, 9> planets = { Planet("mercury"), Planet("venus"), Planet("earth"), Planet("mars"), Planet("jupiter"), Planet("saturn"), Planet("uranus"), Planet("neptune"), Planet("sun") };
+	/*array<Planet, 9> planets = { Planet("mercury"), Planet("venus"), Planet("earth"), Planet("mars"), Planet("jupiter"), Planet("saturn"), Planet("uranus"), Planet("neptune"), Planet("sun") };
 
 
 	for (Planet planet : planets) {
@@ -84,29 +95,14 @@ int main(int argc, char** argv) {
 		cout << coords[2] << endl;
 
 		cout << "------------" << endl;
-	}
-
-	/*Planet body = Planet("mercury");
-	list<VectorData> vectorList = body.getVectorData();
-
-
-	for (auto v : vectorList) {
-		cout << v.toString() << endl;
 	}*/
+
+	planets = { Planet("sun", 0.5), Planet("jupiter", 0.5), Planet("saturn", 0.5), Planet("uranus", 0.5), Planet("neptune", 0.5) };
 
 	glutInit(&argc, argv);
 	
-	/*
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_RGBA);
-	glutInitWindowSize(800, 600);
-	glutInitWindowPosition(10, 10);
-	glutCreateWindow("Solar System");
-	init();
-	glutDisplayFunc(display);
-	glutReshapeFunc(reshape);
-	glEnable(GL_DEPTH_TEST);
-	glutMainLoop();
-	*/
+	displayWindow();
+	
 	return 0;
 
 }
