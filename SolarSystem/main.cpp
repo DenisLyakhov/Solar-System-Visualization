@@ -1,7 +1,10 @@
+#define _USE_MATH_DEFINES
+
 #include <GL/glut.h>
 #include <iostream>
 #include <stdlib.h>
 #include <list>
+#include <math.h>
 
 #include <DataLoader.h>
 #include <DataParser.h>
@@ -27,7 +30,7 @@ double rotation = 0.0;
 
 void reshape(int width, int height) {
 	glMatrixMode(GL_PROJECTION);
-	gluPerspective(50.0, width / (GLfloat)height, 3.0, 500.0);
+	gluPerspective(50.0, width / (GLfloat)height, 3.0, 1000.0);
 	glMatrixMode(GL_MODELVIEW);
 	gluLookAt(0.0, 0.0, 500.0,
 		0.0, 0.0, 0.0,
@@ -55,16 +58,93 @@ void renderPlanet(Planet &planet) {
 	glPopMatrix();
 }
 
+const float maxDistanceFromCenter = 490.0f;
+
+float angleX = 0.0f;
+float angleY = 0.0f;
+
+float distanceFromCenter = 500.0f;
+
+float lastMousePosX = 0.0;
+float lastMousePosY = 0.0;
+
+float lastMouseZoomPos = 0.0f;
+
 void renderMainScene(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	for (Planet p : planets) {
+	glLoadIdentity();
+
+	gluLookAt(0.0f, 0.0f, distanceFromCenter,
+		0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 1.0f);
+	glRotatef(angleX, 1.0f, 0.0f, 0.0f);
+	glRotatef(angleY, 0.0f, 0.0f, 1.0f);
+
+	for (Planet &p : planets) {
 		renderPlanet(p);
 	}
 
 	glutSwapBuffers();
-
 	glutPostRedisplay();
+}
+
+bool zoomInMode = false;
+
+void mouse(int button, int state, int x, int y) {
+	if (button == GLUT_RIGHT_BUTTON) {
+		if (state == GLUT_DOWN) {
+			zoomInMode = true;
+		} else {
+			zoomInMode = false;
+		}
+	} else if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+		lastMousePosX = x;
+		lastMousePosY = y;
+	}
+}
+
+void handleZoomIn(int mousePosY) {
+	if (mousePosY > lastMouseZoomPos && distanceFromCenter < maxDistanceFromCenter) {
+		distanceFromCenter += 10.0f;
+	}
+	else if (mousePosY < lastMouseZoomPos && distanceFromCenter > 10.0f) {
+		distanceFromCenter -= 10.0f;
+	}
+	lastMouseZoomPos = mousePosY;
+}
+
+void handleMouseMovement(int x, int y) {
+	float dx = (float)(x - lastMousePosX);
+	float dy = (float)(y - lastMousePosY);
+	angleX += dy / 5.0f;
+	angleY += dx / 5.0f;
+
+	if (angleX > 360) {
+		angleX -= 360;
+	}
+	else if (angleX < -360) {
+		angleX += 360;
+	}
+	if (angleY > 360) {
+		angleY -= 360;
+	}
+	else if (angleY < -360) {
+		angleY += 360;
+	}
+
+	lastMousePosX = x;
+	lastMousePosY = y;
+}
+
+void motion(int x, int y) {
+
+	if (zoomInMode) {
+		handleZoomIn(y);
+		return;
+	}
+
+	handleMouseMovement(x, y);
 }
 
 void displayWindow() {
@@ -73,6 +153,8 @@ void displayWindow() {
 	glutInitWindowPosition(10, 10);
 	glutCreateWindow("Solar System");
 	init();
+	glutMotionFunc(motion);
+	glutMouseFunc(mouse);
 	glutDisplayFunc(renderMainScene);
 	glutReshapeFunc(reshape);
 	glEnable(GL_DEPTH_TEST);
