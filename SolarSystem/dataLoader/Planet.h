@@ -16,6 +16,9 @@ class Planet {
 
 	public:
 		string name;
+		float x = 0.0;
+		float y = 0.0;
+		float z = 0.0;
 
 		Planet(string name, double size) {
 			this->name = name;
@@ -33,6 +36,8 @@ class Planet {
 		void retrieveVectorData() {
 			string data = loader.getData().text;
 			this->vectorDataList = DataParser::parseDataVector(data);
+
+			this->updateCoordinates();
 		}
 
 
@@ -42,6 +47,13 @@ class Planet {
 
 		inline array<double, 3> getFirstCoordinates() {
 			return this->vectorDataList.front().getCoordinates();
+		}
+
+		void updateCoordinates() {
+			array<double, 3> coordinates = this->getFirstCoordinates();
+			this->x = coordinates[0];
+			this->y = coordinates[1];
+			this->z = coordinates[2];
 		}
 	private:
 		double size;

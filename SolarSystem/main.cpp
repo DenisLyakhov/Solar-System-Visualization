@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 
 #include <GL/glut.h>
+#include <algorithm>
 #include <iostream>
 #include <stdlib.h>
 #include <list>
@@ -28,11 +29,17 @@ list<Planet> planets;
 
 double rotation = 0.0;
 
+float camX = 0.0;
+float camY = 0.0;
+float camZ = 500.0;
+
+float distanceFromCenter = 500.0f;
+
 void reshape(int width, int height) {
 	glMatrixMode(GL_PROJECTION);
 	gluPerspective(50.0, width / (GLfloat)height, 3.0, 1000.0);
 	glMatrixMode(GL_MODELVIEW);
-	gluLookAt(0.0, 0.0, 500.0,
+	gluLookAt(camX, camY, camZ,
 		0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0);
 }
@@ -46,10 +53,71 @@ double sunSize = 0.5;
 double planetSize = 0.5;
 double scale = 20000000.0;
 
+float angleX = 0.0f;
+float angleY = 0.0f;
+
+void renderTextNearObj(float objX, float objY, float objZ, void *font, string string) {
+	int viewport[4];
+	GLdouble modelview[16];
+	GLdouble projection[16];
+
+	// Text offset relative to object
+	float offsetX = 10.0f;
+	float offsetY = 10.0f;
+
+	GLdouble textObjX = objX;
+	GLdouble textObjY = objY;
+	GLdouble textObjZ = objZ;
+
+	GLdouble winX, winY, winZ;
+
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+	glGetDoublev(GL_PROJECTION_MATRIX, projection);
+
+	// Convert world coordinates to screen coordinates
+	gluProject(textObjX, textObjY, textObjZ,
+		modelview, projection, viewport,
+		&winX, &winY, &winZ);
+
+	winX += offsetX;
+	winY += offsetY;
+
+	// Convert modified screen coordinates back to world coordinates
+	gluUnProject(winX, winY, winZ,
+		modelview, projection, viewport,
+		&textObjX, &textObjY, &textObjZ);
+
+	glRasterPos3f(textObjX, textObjY, textObjZ);
+
+	int i = 0;
+	while (string[i] != '\0') {
+		glutBitmapCharacter(font, string[i]);
+		i++;
+	}
+
+}
+
+// Fix
+void renderPlanetName(float x, float y, float z, string name) {
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	if (name == "mercury" || name == "venus" || name == "earth" || name == "mars") {
+		if (distanceFromCenter < 100.0) {
+			renderTextNearObj(x, y, z, GLUT_BITMAP_HELVETICA_10, name);
+		}
+	} else {
+		renderTextNearObj(x, y, z, GLUT_BITMAP_HELVETICA_10, name);
+	}
+}
+
 void renderPlanet(Planet &planet) {
 	array<double, 3> coordinates = planet.getFirstCoordinates();
 	double x = coordinates[0] / scale;
 	double y = coordinates[1] / scale;
+	double z = coordinates[2] / scale;
+
+	renderPlanetName(x, y, z, planet.getName());
 
 	glPushMatrix();
 	glColor3f(9.0, 9.0, 9.0);
@@ -59,11 +127,6 @@ void renderPlanet(Planet &planet) {
 }
 
 const float maxDistanceFromCenter = 490.0f;
-
-float angleX = 0.0f;
-float angleY = 0.0f;
-
-float distanceFromCenter = 500.0f;
 
 float lastMousePosX = 0.0;
 float lastMousePosY = 0.0;
@@ -138,7 +201,6 @@ void handleMouseMovement(int x, int y) {
 }
 
 void motion(int x, int y) {
-
 	if (zoomInMode) {
 		handleZoomIn(y);
 		return;
@@ -179,7 +241,8 @@ int main(int argc, char** argv) {
 		cout << "------------" << endl;
 	}*/
 
-	planets = { Planet("sun", 0.5), Planet("jupiter", 0.5), Planet("saturn", 0.5), Planet("uranus", 0.5), Planet("neptune", 0.5) };
+	//planets = { Planet("sun", 0.5),  Planet("mercury", 0.1), Planet("jupiter", 0.5), Planet("saturn", 0.5), Planet("uranus", 0.5), Planet("neptune", 0.5) };
+	planets = { Planet("sun", 0.5), Planet("mercury", 0.05), Planet("venus", 0.05), Planet("earth", 0.05), Planet("mars", 0.05), Planet("jupiter", 0.5), Planet("saturn", 0.5), Planet("uranus", 0.5), Planet("neptune", 0.5) };
 
 	glutInit(&argc, argv);
 	
