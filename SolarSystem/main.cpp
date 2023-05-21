@@ -14,7 +14,6 @@
 
 using namespace std;
 
-
 const map<string, string> DefaultCelestialBodyData::MERCURY  ={{"COMMAND","199"}};
 const map<string, string> DefaultCelestialBodyData::VENUS	 ={{"COMMAND","299"}};
 const map<string, string> DefaultCelestialBodyData::EARTH	 ={{"COMMAND","399"}};
@@ -25,7 +24,11 @@ const map<string, string> DefaultCelestialBodyData::URANUS	 ={{"COMMAND","799"}}
 const map<string, string> DefaultCelestialBodyData::NEPTUNE  ={{"COMMAND","899"}};
 const map<string, string> DefaultCelestialBodyData::SUN		 ={{"COMMAND","10"}};
 
+static DateTime dateTime;
+
 list<Planet> planets;
+
+// View variables
 
 double rotation = 0.0;
 
@@ -34,6 +37,27 @@ float camY = 0.0;
 float camZ = 500.0;
 
 float distanceFromCenter = 500.0f;
+
+const float maxDistanceFromCenter = 490.0f;
+
+float lastMousePosX = 0.0;
+float lastMousePosY = 0.0;
+
+float lastMouseZoomPos = 0.0f;
+
+float angleX = 0.0f;
+float angleY = 0.0f;
+
+// Object variables
+
+double sunSize = 0.5;
+double planetSize = 0.5;
+double scale = 20000000.0;
+
+// Scene modes
+bool dateChangingMode = false;
+bool dateValueChanged = false;
+bool zoomInMode = false;
 
 void reshape(int width, int height) {
 	glMatrixMode(GL_PROJECTION);
@@ -44,17 +68,63 @@ void reshape(int width, int height) {
 		0.0, 1.0, 0.0);
 }
 
-void init(void) {
-	glClearColor(0.0, 0.0, 0.0, 0.0);
-	glShadeModel(GL_FLAT);
+void init(void) { 
+	dateTime = DateTime();
+	cout << "init" << endl;
 }
 
-double sunSize = 0.5;
-double planetSize = 0.5;
-double scale = 20000000.0;
+void enableLighting() {
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_DEPTH_TEST);
 
-float angleX = 0.0f;
-float angleY = 0.0f;
+	GLfloat light1_position[] = { 0.0, 0.0, 10.0, 0.0 };
+	GLfloat light_diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+	glLightfv(GL_LIGHT0, GL_POSITION, light1_position);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+}
+
+void renderGUI() {
+
+	GLfloat x = 10.0f;
+	GLfloat y = 10.0f;
+
+	time_t now = time(0);
+	char dt[30];
+	ctime_s(dt, sizeof dt, &now);
+	std::string date_time(dt);
+
+	string guiText = dateTime.toString();
+
+	if (dateChangingMode) {
+		guiText += ": Retrieving data...";
+	}
+	else if (dateValueChanged) {
+		guiText += ": Press Enter to apply";
+	}
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	gluOrtho2D(0.0f, glutGet(GLUT_WINDOW_WIDTH), 0.0f, glutGet(GLUT_WINDOW_HEIGHT));
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	glRasterPos2f(x, y);
+	for (int i = 0; i < guiText.length(); i++)
+	{
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, guiText[i]);
+	}
+
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+}
 
 void renderTextNearObj(float objX, float objY, float objZ, void *font, string string) {
 	int viewport[4];
@@ -88,6 +158,14 @@ void renderTextNearObj(float objX, float objY, float objZ, void *font, string st
 		modelview, projection, viewport,
 		&textObjX, &textObjY, &textObjZ);
 
+	GLfloat textColor[] = { 1.0f, 1.0f, 1.0f };
+	GLfloat mat_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	GLfloat mat_shininess[] = { 1000.0f };
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, textColor);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
+
 	glRasterPos3f(textObjX, textObjY, textObjZ);
 
 	int i = 0;
@@ -98,10 +176,7 @@ void renderTextNearObj(float objX, float objY, float objZ, void *font, string st
 
 }
 
-// Fix
 void renderPlanetName(float x, float y, float z, string name) {
-	glColor3f(1.0f, 1.0f, 1.0f);
-
 	if (name == "mercury" || name == "venus" || name == "earth" || name == "mars") {
 		if (distanceFromCenter < 100.0) {
 			renderTextNearObj(x, y, z, GLUT_BITMAP_HELVETICA_10, name);
@@ -109,6 +184,24 @@ void renderPlanetName(float x, float y, float z, string name) {
 	} else {
 		renderTextNearObj(x, y, z, GLUT_BITMAP_HELVETICA_10, name);
 	}
+}
+
+void renderPlanetOrbit(float x, float y, float z) {
+	glPushMatrix();
+	glTranslatef(0, 0, 0);
+	glColor3f(1.0, 1.0, 1.0);
+
+	double radius = sqrt(x*x + y*y);
+
+	glBegin(GL_LINE_LOOP);
+	for (int i = 0; i < 360; i++)
+	{
+		float orbit_x = radius * cos(i * M_PI / 180.0f);
+		float orbit_y = radius * sin(i * M_PI / 180.0f);
+		glVertex3f(orbit_x, orbit_y, 0.0f);
+	}
+	glEnd();
+	glPopMatrix();
 }
 
 void renderPlanet(Planet &planet) {
@@ -119,19 +212,21 @@ void renderPlanet(Planet &planet) {
 
 	renderPlanetName(x, y, z, planet.getName());
 
+	enableLighting();
+
+	renderPlanetOrbit(x, y, 0.0f);
+
+	GLfloat red[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, red);
+
 	glPushMatrix();
 	glColor3f(9.0, 9.0, 9.0);
 	glTranslatef(x, y, 0.0);
-	glutWireSphere(planet.getSize(), 10, 8);
+	glutSolidSphere(planet.getSize(), 10, 8);
 	glPopMatrix();
+
+	glDisable(GL_LIGHTING);
 }
-
-const float maxDistanceFromCenter = 490.0f;
-
-float lastMousePosX = 0.0;
-float lastMousePosY = 0.0;
-
-float lastMouseZoomPos = 0.0f;
 
 void renderMainScene(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -144,15 +239,22 @@ void renderMainScene(void) {
 	glRotatef(angleX, 1.0f, 0.0f, 0.0f);
 	glRotatef(angleY, 0.0f, 0.0f, 1.0f);
 
+	renderGUI();
+
 	for (Planet &p : planets) {
 		renderPlanet(p);
 	}
 
 	glutSwapBuffers();
 	glutPostRedisplay();
-}
 
-bool zoomInMode = false;
+	if (dateChangingMode) {
+		dateChangingMode = false;
+		for (Planet &p : planets) {
+			p.retrieveVectorData();
+		}
+	}
+}
 
 void mouse(int button, int state, int x, int y) {
 	if (button == GLUT_RIGHT_BUTTON) {
@@ -164,6 +266,40 @@ void mouse(int button, int state, int x, int y) {
 	} else if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 		lastMousePosX = x;
 		lastMousePosY = y;
+	}
+}
+
+void keyboard(unsigned char key, int x, int y) {
+	if (key == 'z' || key == 'x' || key == 'a' || key == 's' || key == 'q' || key == 'w') {
+		dateValueChanged = true;
+	}
+
+	switch (key) {
+	case 'z':
+		dateTime.increaseDay();
+		break;
+	case 'x':
+		dateTime.decreaseDay();
+		break;
+	case 'a':
+		dateTime.increaseMonth();
+		break;
+	case 's':
+		dateTime.decreaseMonth();
+		break;
+	case 'q':
+		dateTime.increaseYear();
+		break;
+	case 'w':
+		dateTime.decreaseYear();
+		break;
+	default:
+		break;
+	}
+
+	if (key == (char)13) {
+		dateChangingMode = true;
+		dateValueChanged = false;
 	}
 }
 
@@ -217,6 +353,7 @@ void displayWindow() {
 	init();
 	glutMotionFunc(motion);
 	glutMouseFunc(mouse);
+	glutKeyboardFunc(keyboard);
 	glutDisplayFunc(renderMainScene);
 	glutReshapeFunc(reshape);
 	glEnable(GL_DEPTH_TEST);
@@ -243,6 +380,7 @@ int main(int argc, char** argv) {
 
 	//planets = { Planet("sun", 0.5),  Planet("mercury", 0.1), Planet("jupiter", 0.5), Planet("saturn", 0.5), Planet("uranus", 0.5), Planet("neptune", 0.5) };
 	planets = { Planet("sun", 0.5), Planet("mercury", 0.05), Planet("venus", 0.05), Planet("earth", 0.05), Planet("mars", 0.05), Planet("jupiter", 0.5), Planet("saturn", 0.5), Planet("uranus", 0.5), Planet("neptune", 0.5) };
+	//planets = { Planet("sun", 0.5) };
 
 	glutInit(&argc, argv);
 	

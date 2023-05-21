@@ -55,6 +55,12 @@ class Planet {
 			this->y = coordinates[1];
 			this->z = coordinates[2];
 		}
+
+		// Refactor
+		std::string getDate() {
+			return this->vectorDataList.front().getDate();
+		}
+
 	private:
 		double size;
 
