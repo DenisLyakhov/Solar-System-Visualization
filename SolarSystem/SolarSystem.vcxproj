@@ -116,6 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>./ModelLoader</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -125,16 +126,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="model3DS.cpp" />
+    <ClCompile Include="rysowanie.cpp" />
+    <ClCompile Include="textureBMP.cpp" />
+    <ClCompile Include="textureTGA.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ModelLoader\Mesh.h" />
-    <ClInclude Include="ModelLoader\Model.h">
-      <FileType>CppHeader</FileType>
-    </ClInclude>
-    <ClInclude Include="ModelLoader\Shader.h" />
+    <ClInclude Include="glut.h" />
+    <ClInclude Include="model3DS.h" />
+    <ClInclude Include="textureBMP.h" />
+    <ClInclude Include="textureTGA.h" />
+    <ClInclude Include="Vector.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Uranus.glb" />
+    <Library Include="..\..\Ćwiczenia1\szablon - tunel\glut32.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
