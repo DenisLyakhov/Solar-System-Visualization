@@ -20,7 +20,7 @@ double kameraX = 0;
 double kameraY = 0;
 double kameraZ = 0;
 
-vector<string> currentModelList = {"earth","venus","untitled"};
+vector<string> currentModelList = { "mercurio","venus","earth","mars", "jupiter", "saturn", "uranus", "neptune"};
 
 struct model_w_skladzie {
 	char* filename;
@@ -140,7 +140,7 @@ void display(void) {
 	rysujModel(charPtr);
 	glPopMatrix();
 
-	gluLookAt(0, 0, 0,kameraZ, 0, -1, 0, 1, 0);
+	gluLookAt(0, 0, 0, kameraZ, 0, -1, 0, 1, 0);
 	GLfloat	 position[4] = { 300,300,300,1 };
 	glLightfv(GL_LIGHT0, GL_POSITION, position);
 
@@ -157,12 +157,12 @@ void keyboard(unsigned char key, int x, int y) {
 
 	switch (key) {
 	case '+':
-		if (currentModel < 3) currentModel++;
+		if (currentModel < 7) currentModel++;
 		else currentModel = 0;
 		break;
 	case '-':
-		if (currentModel > 1) currentModel--;
-		else currentModel = 2;
+		if (currentModel >= 1) currentModel--;
+		else currentModel = 7;
 		break;
 	case 'z':
 		kameraZ-=0.1;
