@@ -1,5 +1,9 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include <glad/glad.h>
+
+//#include <glad/glad.h>
+#include "glut.h"
+
+
 #include <iostream>
 #include <stdlib.h>
 #include <direct.h>
@@ -17,8 +21,6 @@ double kameraY = 0;
 double kameraZ = 0;
 
 vector<string> currentModelList = {"earth","venus","untitled"};
-
-
 
 struct model_w_skladzie {
 	char* filename;
@@ -183,10 +185,6 @@ int main(int argc, char** argv) {
 
 	glutInit(&argc, argv);
 	//D:\Studia\OpenGL\Projekt
-	Model model;
-	model.loadFromFile("Œcie¿ka  mercurio.obj");
-
-	cout << model.getVertexCount() << endl;
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_RGBA);
 	glutInitWindowSize(800, 600);
