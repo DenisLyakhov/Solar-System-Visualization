@@ -47,9 +47,9 @@
     <ClInclude Include="glut.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\..\Ćwiczenia1\szablon - tunel\glut32.lib" />
+    <ClInclude Include="dataLoader\DateTime.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dataLoader\DataLoader.h">
@@ -67,5 +67,8 @@
     <ClInclude Include="dataLoader\DefaultCelestialBodyData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="glut32.lib" />
   </ItemGroup>
 </Project>

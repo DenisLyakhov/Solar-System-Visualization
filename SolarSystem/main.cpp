@@ -34,16 +34,41 @@ static DateTime dateTime;
 
 list<Planet> planets;
 
-// View variables
+int selectedScene = 1;
 
-double rotation = 0.0;
-int stereoTryb = 0;
+// View variables for detail scene
+
 int currentModel = 0;
 
-double kameraX = 0;
-double kameraY = 0;
-double kameraZ = 0;
+double camX = 0.0;
+double camY = 0.0;
+double camZ = 500.0;
 
+// Variables for main scene
+
+float distanceFromCenter = 500.0f;
+const float maxDistanceFromCenter = 490.0f;
+
+float lastMousePosX = 0.0;
+float lastMousePosY = 0.0;
+
+float lastMouseZoomPos = 0.0f;
+
+float angleX = 0.0f;
+float angleY = 0.0f;
+
+// Object variables
+
+double sunSize = 0.5;
+double planetSize = 0.5;
+double scale = 20000000.0;
+
+// Scene modes
+bool dateChangingMode = false;
+bool dateValueChanged = false;
+bool zoomInMode = false;
+
+// Load Models
 vector<string> currentModelList = { "mercurio","venus","earth","mars", "jupiter", "saturn", "uranus", "neptune"};
 
 struct model_w_skladzie {
@@ -96,7 +121,7 @@ void aktywujSpecjalneRenderowanieModelu(char* file_name, int spec_id = 0)
 	if (model_tmp = pobierzModel(file_name))
 		model_tmp->setSpecialTransform(spec_id);
 }
-//�adujem modele z folderu
+
 void ladujModele()
 {
 	WIN32_FIND_DATA* fd;
@@ -110,79 +135,68 @@ void ladujModele()
 	fh = FindFirstFile((LPCSTR)directory, fd);
 	if (fh != INVALID_HANDLE_VALUE)
 		do {
-			if (fd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {	// katalogi ignorujemy
+			if (fd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 				if (FindNextFile(fh, fd)) continue; else break;
 			}
-			// ladowanie obiektu i dodanie do kontenera
 			char filename[_MAX_PATH];
 			strcpy(filename, "data\\");
 			strcat(filename, fd->cFileName);
-			model_tmp = new model3DS(filename, 1, stereoTryb == 2);
+			model_tmp = new model3DS(filename, 1, false);
 			dodajModel(model_tmp, fd->cFileName);
 			printf("[3DS] Model '%s' stored\n", fd->cFileName);
 		} while (FindNextFile(fh, fd));
 }
 
+// ---
+
 void init(void) {
 	dateTime = DateTime();
-
-	glClearColor(0.0, 0.0, 0.0, 0.0);
-
-	glShadeModel(GL_SMOOTH);
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_DEPTH_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glEnable(GL_LIGHTING);
-	GLfloat  ambient[4] = { 0.3,0.3,0.3,1 };
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
-
-	GLfloat  diffuse[4] = { 0.9,0.9,0.9,1 };
-	GLfloat  specular[4] = { 0.9,0.9,0.9,1 };
-	GLfloat	 position[4] = { 300,300,300,1 };
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
-	glLightfv(GL_LIGHT0, GL_POSITION, position);
-	glEnable(GL_LIGHT0);  // �wiatlo sceny
-
-
-	glShadeModel(GL_FLAT);
 }
-
-float distanceFromCenter = 500.0f;
-
-const float maxDistanceFromCenter = 490.0f;
-
-float lastMousePosX = 0.0;
-float lastMousePosY = 0.0;
-
-float lastMouseZoomPos = 0.0f;
-
-float angleX = 0.0f;
-float angleY = 0.0f;
-
-// Object variables
-
-double sunSize = 0.5;
-double planetSize = 0.5;
-double scale = 20000000.0;
-
-// Scene modes
-bool dateChangingMode = false;
-bool dateValueChanged = false;
-bool zoomInMode = false;
 
 void reshape(int width, int height) {
 	glMatrixMode(GL_PROJECTION);
-	gluPerspective(50.0, width / (GLfloat)height, 3.0, 1000.0);
+	gluPerspective(50.0, width / (GLfloat)height, 0.1, 1000.0);
 	glMatrixMode(GL_MODELVIEW);
 	gluLookAt(camX, camY, camZ,
 		0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0);
 }
 
-void keyboard(unsigned char key, int x, int y) {
+void controlMainScene(unsigned char key) {
+	if (key == 'z' || key == 'x' || key == 'a' || key == 's' || key == 'q' || key == 'w') {
+		dateValueChanged = true;
+	}
 
+	switch (key) {
+	case 'z':
+		dateTime.increaseDay();
+		break;
+	case 'x':
+		dateTime.decreaseDay();
+		break;
+	case 'a':
+		dateTime.increaseMonth();
+		break;
+	case 's':
+		dateTime.decreaseMonth();
+		break;
+	case 'q':
+		dateTime.increaseYear();
+		break;
+	case 'w':
+		dateTime.decreaseYear();
+		break;
+	default:
+		break;
+	}
+
+	if (key == (char)13) {
+		dateChangingMode = true;
+		dateValueChanged = false;
+	}
+}
+
+void controlSecondaryScene(unsigned char key) {
 	switch (key) {
 	case '+':
 		if (currentModel < 7) currentModel++;
@@ -192,20 +206,26 @@ void keyboard(unsigned char key, int x, int y) {
 		if (currentModel >= 1) currentModel--;
 		else currentModel = 7;
 		break;
-	case 'z':
-		kameraZ-=0.1;
-		break;
-	case 'x':
-		kameraZ+=0.1;
-		break;
-	case 'c':
-		kameraY++;
-		break;
-	case 'p':
-		std::cout << kameraX<< endl;;
-		break;
 	default:
 		break;
+	}
+}
+
+void keyboard(unsigned char key, int x, int y) {
+	if (key == '1') {
+		distanceFromCenter = 500.0;
+		selectedScene = 1;
+	}
+	else if (key == '2') {
+		distanceFromCenter = 10.0;
+		selectedScene = 2;
+	}
+
+	if (selectedScene == 1) {
+		controlMainScene(key);
+	}
+	else if (selectedScene == 2) {
+		controlSecondaryScene(key);
 	}
 }
 
@@ -222,7 +242,6 @@ void enableLighting() {
 }
 
 void renderGUI() {
-
 	GLfloat x = 10.0f;
 	GLfloat y = 10.0f;
 
@@ -364,29 +383,7 @@ void renderPlanet(Planet &planet) {
 	glDisable(GL_LIGHTING);
 }
 
-void renderMainScene(void) {
-
-	// Second scene
-
-	// std::string planet = currentModelList.at(currentModel);//Changint planet
-
-	// char* charPtr = new char[planet.length() + 1]; 
-	// std::strcpy(charPtr, planet.c_str());
-
-	// glPushMatrix();
-	// glTranslatef(0, 0.0, 0);
-	// glRotatef(0, 0, 0, 0);
-	// rysujModel(charPtr);
-	// glPopMatrix();
-
-	// gluLookAt(0, 0, 0, kameraZ, 0, -1, 0, 1, 0);
-	// GLfloat	 position[4] = { 300,300,300,1 };
-	// glLightfv(GL_LIGHT0, GL_POSITION, position);
-
-	// kameraX = 0;
-	// kameraY = 0;
-	// kameraZ = 0;
-
+void renderMainScene() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
@@ -414,6 +411,83 @@ void renderMainScene(void) {
 	}
 }
 
+void enableLightingForSecondaryScene() {
+	//glClearColor(0.0, 0.0, 0.0, 0.0);
+
+	//glShadeModel(GL_SMOOTH);
+	//glEnable(GL_TEXTURE_2D);
+	//glEnable(GL_DEPTH_TEST);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glEnable(GL_LIGHTING);
+	//GLfloat  ambient[4] = { 0.3,0.3,0.3,1 };
+	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
+
+	//GLfloat  diffuse[4] = { 0.9,0.9,0.9,1 };
+	//GLfloat  specular[4] = { 0.9,0.9,0.9,1 };
+	//GLfloat	 position[4] = { 300,300,300,1 };
+	//glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+	//glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+	//glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
+	//glLightfv(GL_LIGHT0, GL_POSITION, position);
+	//glEnable(GL_LIGHT0);  // �wiatlo sceny
+
+	//glShadeModel(GL_SMOOTH);
+
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_DEPTH_TEST);
+
+	GLfloat light1_position[] = { 300,300,300,1 };
+	GLfloat light_diffuse[] = { 0.9,0.9,0.9,1 };
+
+	glLightfv(GL_LIGHT0, GL_POSITION, light1_position);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+
+
+	//glShadeModel(GL_FLAT);
+}
+
+void renderSecondaryScene() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glLoadIdentity();
+
+	gluLookAt(0.0f, 0.0f, distanceFromCenter,
+		0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 1.0f);
+	glRotatef(angleX, 1.0f, 0.0f, 0.0f);
+	glRotatef(angleY, 0.0f, 0.0f, 1.0f);
+
+	std::string planet = currentModelList.at(currentModel);//Changint planet
+
+	char* charPtr = new char[planet.length() + 1]; 
+	std::strcpy(charPtr, planet.c_str());
+
+	enableLightingForSecondaryScene();
+
+	glPushMatrix();
+	glTranslatef(0.0f, 0.0f, 0.0f);
+	glRotatef(0, 0, 0, 0);
+	rysujModel(charPtr);
+	glPopMatrix();
+
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+
+	glutSwapBuffers();
+	glutPostRedisplay();
+}
+
+void display(void) {
+	if (selectedScene == 1) {
+		renderMainScene();
+	}
+	else if (selectedScene == 2) {
+		renderSecondaryScene();
+	}
+}
+
 void mouse(int button, int state, int x, int y) {
 	if (button == GLUT_RIGHT_BUTTON) {
 		if (state == GLUT_DOWN) {
@@ -427,46 +501,22 @@ void mouse(int button, int state, int x, int y) {
 	}
 }
 
-void keyboard(unsigned char key, int x, int y) {
-	if (key == 'z' || key == 'x' || key == 'a' || key == 's' || key == 'q' || key == 'w') {
-		dateValueChanged = true;
-	}
-
-	switch (key) {
-	case 'z':
-		dateTime.increaseDay();
-		break;
-	case 'x':
-		dateTime.decreaseDay();
-		break;
-	case 'a':
-		dateTime.increaseMonth();
-		break;
-	case 's':
-		dateTime.decreaseMonth();
-		break;
-	case 'q':
-		dateTime.increaseYear();
-		break;
-	case 'w':
-		dateTime.decreaseYear();
-		break;
-	default:
-		break;
-	}
-
-	if (key == (char)13) {
-		dateChangingMode = true;
-		dateValueChanged = false;
-	}
-}
-
-void handleZoomIn(int mousePosY) {
+void handleMainZoomIn(int mousePosY) {
 	if (mousePosY > lastMouseZoomPos && distanceFromCenter < maxDistanceFromCenter) {
 		distanceFromCenter += 10.0f;
 	}
 	else if (mousePosY < lastMouseZoomPos && distanceFromCenter > 10.0f) {
 		distanceFromCenter -= 10.0f;
+	}
+	lastMouseZoomPos = mousePosY;
+}
+
+void handleDetailZoomIn(int mousePosY) {
+	if (mousePosY > lastMouseZoomPos && distanceFromCenter < 10.0f) {
+		distanceFromCenter += 0.1f;
+	}
+	else if (mousePosY < lastMouseZoomPos && distanceFromCenter > 3.5f) {
+		distanceFromCenter -= 0.1f;
 	}
 	lastMouseZoomPos = mousePosY;
 }
@@ -496,7 +546,12 @@ void handleMouseMovement(int x, int y) {
 
 void motion(int x, int y) {
 	if (zoomInMode) {
-		handleZoomIn(y);
+		if (selectedScene == 1) {
+			handleMainZoomIn(y);
+		}
+		else {
+			handleDetailZoomIn(y);
+		}
 		return;
 	}
 
@@ -513,15 +568,11 @@ void displayWindow() {
 	glutMotionFunc(motion);
 	glutMouseFunc(mouse);
 	glutKeyboardFunc(keyboard);
-	glutDisplayFunc(renderMainScene);
+	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
-	// Second scene
-
-	// glutKeyboardFunc(keyboard);
-	// glutDisplayFunc(display);
 	
 	glEnable(GL_DEPTH_TEST);
-	gluLookAt(0, 0, 1, 0, 0, -1, 0, 1, 0); // kamera
+	gluLookAt(0, 0, 1, 0, 0, -1, 0, 1, 0);
 	ladujModele();
 
 	glutMainLoop();
