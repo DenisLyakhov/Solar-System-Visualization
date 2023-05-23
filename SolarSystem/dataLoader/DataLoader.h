@@ -4,9 +4,12 @@
 #include<iostream>
 #include <cpr/cpr.h>
 #include <sstream>
+#include <DateTime.h>
 
 using namespace std;
 using namespace cpr;
+
+extern DateTime dateTime;
 
 class DataLoader {
 	
@@ -30,14 +33,16 @@ class DataLoader {
 			return Get(Url{ buildUrl() });
 		}
 		DataLoader() {
+			pair<string, string> datePair = processDate();
+
 			this->URL_BASE = "https://ssd.jpl.nasa.gov/api/horizons.api?";
 			setFormat("text");
 			setCommand("1");
 			setMakeEphem("'YES'");
 			setEphemType("'VECTOR'");
-			setStartTime("'2006-01-01'");
-			setStopTime("'2006-01-20'");
-			setStepSize("'1%20d'");
+			setStartTime(datePair.first);
+			setStopTime(datePair.second);
+			setStepSize("'2%20d'");
 			setObjData("'YES'");
 			setCenter("500@10");
 
@@ -59,6 +64,10 @@ class DataLoader {
 		}
 		virtual string buildUrl() {
 			string returnString;
+
+			pair<string, string> datePair = processDate();
+			setStartTime(datePair.first);
+			setStopTime(datePair.second);
 
 			returnString = this->URL_BASE;
 			returnString = addPart(returnString, this->FORMAT);
@@ -102,6 +111,17 @@ class DataLoader {
 		loader.setEphemType("EPHEM_TYPE='VECTOR'");
 		*/
 	private:
+
+		pair<string, string> processDate() {
+			DateTime dateTimeIncreased = dateTime;
+			dateTimeIncreased.increaseDay();
+
+			string date1 = "'" + dateTime.toString() + "'";
+			string date2 = "'" + dateTimeIncreased.toString() + "'";
+
+			return make_pair(date1, date2);
+		}
+
 		string addPart(string url,string urlPart) {
 			if (urlPart == "") return url;
 			else if (urlPart == this->FORMAT) return url + urlPart;

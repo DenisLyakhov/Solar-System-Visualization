@@ -37,6 +37,7 @@ class DataParser {
 				VectorData vector = VectorData();
 
 				string line = removeOneLine(text);
+				vector.setDate(getDate(line));
 				line = removeOneLine(text);
 				vector.setCoordinates(getCordinatesArray(line));
 
