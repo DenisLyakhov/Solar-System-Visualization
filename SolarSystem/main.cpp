@@ -1,10 +1,7 @@
 #define _USE_MATH_DEFINES
 #define STB_IMAGE_IMPLEMENTATION
 
-//#include <glad/glad.h>
 #include "glut.h"
-
-#include <GL/glut.h>
 #include <algorithm>
 #include <iostream>
 #include <stdlib.h>
