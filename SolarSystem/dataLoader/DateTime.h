@@ -1,4 +1,9 @@
+const  int monthDays[12]
+= { 31, 28, 31, 30, 31, 30,
+   31, 31, 30, 31, 30, 31 };
+
 class DateTime {
+
 public:
 	int year;
 	int month;
@@ -82,7 +87,28 @@ public:
 		return std::to_string(year) + "-" + std::to_string(month) + "-" + std::to_string(day);
 	}
 
+	static int getDifference(DateTime dt1, DateTime dt2)
+	{
+
+		long int n1 = dt1.year * 365 + dt1.day;
+
+		for (int i = 0; i < dt1.month - 1; i++)
+			n1 += monthDays[i];
+
+		n1 += countLeapYears(dt1);
+
+		long int n2 = dt2.year * 365 + dt2.day;
+		for (int i = 0; i < dt2.month - 1; i++)
+			n2 += monthDays[i];
+		n2 += countLeapYears(dt2);
+
+		return (n2 - n1);
+	}
+
+
 private:
+
+	
 	bool isValidDate() {
 		if (checkLeapDay()) {
 			return false;
@@ -110,5 +136,17 @@ private:
 			}
 		}
 		return false;
+	}
+
+	static int countLeapYears(DateTime d)
+	{
+		int years = d.year;
+		// or not
+		if (d.month <= 2)
+			years--;
+
+		return years / 4
+			- years / 100
+			+ years / 400;
 	}
 };

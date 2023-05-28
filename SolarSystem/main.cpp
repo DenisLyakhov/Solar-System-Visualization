@@ -67,6 +67,7 @@ bool zoomInMode = false;
 
 // Load Models
 vector<string> currentModelList = { "mercurio","venus","earth","mars", "jupiter", "saturn", "uranus", "neptune"};
+map<string, float> planetsRotationSpeed = { {"mercurio",0.01694915254},{"venus",0.004115226337 },{"earth",1.0},{"mars",0.9749492214}, {"jupiter",2.4}, {"saturn",2.28571428571}, {"uranus",1.39534883721}, {"neptune",1.49068322981}};
 
 struct model_w_skladzie {
 	char* filename;
@@ -409,26 +410,6 @@ void renderMainScene() {
 }
 
 void enableLightingForSecondaryScene() {
-	//glClearColor(0.0, 0.0, 0.0, 0.0);
-
-	//glShadeModel(GL_SMOOTH);
-	//glEnable(GL_TEXTURE_2D);
-	//glEnable(GL_DEPTH_TEST);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	//glEnable(GL_LIGHTING);
-	//GLfloat  ambient[4] = { 0.3,0.3,0.3,1 };
-	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
-
-	//GLfloat  diffuse[4] = { 0.9,0.9,0.9,1 };
-	//GLfloat  specular[4] = { 0.9,0.9,0.9,1 };
-	//GLfloat	 position[4] = { 300,300,300,1 };
-	//glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-	//glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-	//glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
-	//glLightfv(GL_LIGHT0, GL_POSITION, position);
-	//glEnable(GL_LIGHT0);  // �wiatlo sceny
-
-	//glShadeModel(GL_SMOOTH);
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
@@ -457,6 +438,9 @@ void renderSecondaryScene() {
 	glRotatef(angleY, 0.0f, 0.0f, 1.0f);
 
 	std::string planet = currentModelList.at(currentModel);//Changint planet
+	GLfloat angle = planetsRotationSpeed.at(planet) * 360 * DateTime::getDifference(DateTime(),dateTime);
+
+	if (planet == "venus") angle = 360 - angle;
 
 	char* charPtr = new char[planet.length() + 1]; 
 	std::strcpy(charPtr, planet.c_str());
@@ -465,7 +449,7 @@ void renderSecondaryScene() {
 
 	glPushMatrix();
 	glTranslatef(0.0f, 0.0f, 0.0f);
-	glRotatef(0, 0, 0, 0);
+	glRotatef(angle, 0, 1, 0);
 	rysujModel(charPtr);
 	glPopMatrix();
 
