@@ -199,10 +199,12 @@ void controlMainScene(unsigned char key) {
 void controlSecondaryScene(unsigned char key) {
 	switch (key) {
 	case '+':
+		planetRotation = 0;
 		if (currentModel < 7) currentModel++;
 		else currentModel = 0;
 		break;
 	case '-':
+		planetRotation = 0;
 		if (currentModel >= 1) currentModel--;
 		else currentModel = 7;
 		break;
@@ -225,6 +227,7 @@ void keyboard(unsigned char key, int x, int y) {
 		selectedScene = 1;
 	}
 	else if (key == '2') {
+		planetRotation = 0;
 		distanceFromCenter = 10.0;
 		selectedScene = 2;
 	}
