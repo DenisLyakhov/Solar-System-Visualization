@@ -54,6 +54,8 @@ float lastMouseZoomPos = 0.0f;
 float angleX = 0.0f;
 float angleY = 0.0f;
 
+float planetRotation = 0.0f;
+
 // Object variables
 
 double sunSize = 0.5;
@@ -203,6 +205,14 @@ void controlSecondaryScene(unsigned char key) {
 	case '-':
 		if (currentModel >= 1) currentModel--;
 		else currentModel = 7;
+		break;
+	case 'q':
+		if (planetRotation == 0) planetRotation = 359;
+		else planetRotation--;
+		break;
+	case 'w':
+		if (planetRotation == 360) planetRotation = 0;
+		else planetRotation++;
 		break;
 	default:
 		break;
@@ -449,7 +459,7 @@ void renderSecondaryScene() {
 
 	glPushMatrix();
 	glTranslatef(0.0f, 0.0f, 0.0f);
-	glRotatef(angle, 0, 1, 0);
+	glRotatef(angle+planetRotation, 0, 1, 0);
 	rysujModel(charPtr);
 	glPopMatrix();
 
