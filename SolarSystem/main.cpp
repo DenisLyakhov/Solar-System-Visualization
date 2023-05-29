@@ -69,6 +69,10 @@ bool zoomInMode = false;
 
 // Load Models
 vector<string> currentModelList = { "mercurio","venus","earth","mars", "jupiter", "saturn", "uranus", "neptune"};
+
+map<string, vector<GLfloat>> planetColors = { {"Sun", {1.0f, 1.0f, 0.0f, 1.0f}}, {"Mercury", {0.55f, 0.55f, 0.4f, 1.0f}}, {"Venus", {1.0f, 0.5f, 0.0f, 1.0f}}, {"Earth", {0.5f, 0.5f, 1.0f, 1.0f}}, 
+{"Mars", {1.0f, 0.2f, 0.1f, 1.0f}}, {"Jupiter", {1.0f, 0.2f, 0.0f, 1.0f}}, {"Saturn", {0.9f, 0.8f, 0.2f, 1.0f}}, {"Uranus", {0.2f, 1.0f, 0.8f, 1.0f}}, {"Neptune", {0.0f, 0.0f, 1.0f, 1.0f}} };
+
 map<string, float> planetsRotationSpeed = { {"mercurio",0.01694915254},{"venus",0.004115226337 },{"earth",1.0},{"mars",0.9749492214}, {"jupiter",2.4}, {"saturn",2.28571428571}, {"uranus",1.39534883721}, {"neptune",1.49068322981}};
 
 struct model_w_skladzie {
@@ -249,7 +253,9 @@ void enableLighting() {
 	GLfloat light_diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	glLightfv(GL_LIGHT0, GL_POSITION, light1_position);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, light_diffuse);
+
+	//glShadeModel(GL_FLAT);
 }
 
 void renderGUI() {
@@ -343,7 +349,7 @@ void renderTextNearObj(float objX, float objY, float objZ, void *font, string st
 }
 
 void renderPlanetName(float x, float y, float z, string name) {
-	if (name == "mercury" || name == "venus" || name == "earth" || name == "mars") {
+	if (name == "Mercury" || name == "Venus" || name == "Earth" || name == "Mars") {
 		if (distanceFromCenter < 100.0) {
 			renderTextNearObj(x, y, z, GLUT_BITMAP_HELVETICA_10, name);
 		}
@@ -355,7 +361,7 @@ void renderPlanetName(float x, float y, float z, string name) {
 void renderPlanetOrbit(float x, float y, float z) {
 	glPushMatrix();
 	glTranslatef(0, 0, 0);
-	glColor3f(1.0, 1.0, 1.0);
+	glColor3f(0.5, 0.5, 0.5);
 
 	double radius = sqrt(x*x + y*y);
 
@@ -378,12 +384,11 @@ void renderPlanet(Planet &planet) {
 
 	renderPlanetName(x, y, z, planet.getName());
 
-	enableLighting();
-
 	renderPlanetOrbit(x, y, 0.0f);
 
-	GLfloat red[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, red);
+	enableLighting();
+	
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, planetColors.at(planet.getName()).data());
 
 	glPushMatrix();
 	glColor3f(9.0, 9.0, 9.0);
@@ -431,9 +436,11 @@ void enableLightingForSecondaryScene() {
 
 	GLfloat light1_position[] = { 300,300,300,1 };
 	GLfloat light_diffuse[] = { 0.9,0.9,0.9,1 };
+	GLfloat light_ambient[] = { 0,0,0,1 };
 
 	glLightfv(GL_LIGHT0, GL_POSITION, light1_position);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
 
 
 	//glShadeModel(GL_FLAT);
@@ -447,10 +454,11 @@ void renderSecondaryScene() {
 	gluLookAt(0.0f, 0.0f, distanceFromCenter,
 		0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 1.0f);
-	glRotatef(angleX, 1.0f, 0.0f, 0.0f);
-	glRotatef(angleY, 0.0f, 0.0f, 1.0f);
 
-	std::string planet = currentModelList.at(currentModel);//Changint planet
+	glRotatef(angleX, 1.0f, 0.0f, 0.0f);
+	glRotatef(angleY, 0.0f, 1.0f, 0.0f);
+
+	std::string planet = currentModelList.at(currentModel);//Changing planet
 	GLfloat angle = planetsRotationSpeed.at(planet) * 360 * DateTime::getDifference(DateTime(),dateTime);
 
 	if (planet == "venus") angle = 360 - angle;
@@ -534,6 +542,13 @@ void handleMouseMovement(int x, int y) {
 		angleY += 360;
 	}
 
+	if (angleX >= 90) {
+		angleX = 90;
+	}
+	else if (angleX <= -90) {
+		angleX = -90;
+	}
+
 	lastMousePosX = x;
 	lastMousePosY = y;
 }
@@ -554,7 +569,7 @@ void motion(int x, int y) {
 
 void displayWindow() {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_RGBA);
-	glutInitWindowSize(1600, 900);
+	glutInitWindowSize(1280, 720);
 	glutInitWindowPosition(10, 10);
 	glutCreateWindow("Solar System");
 	init();
@@ -591,7 +606,8 @@ int main(int argc, char** argv) {
 	}*/
 
 	//planets = { Planet("sun", 0.5),  Planet("mercury", 0.1), Planet("jupiter", 0.5), Planet("saturn", 0.5), Planet("uranus", 0.5), Planet("neptune", 0.5) };
-	planets = { Planet("sun", 0.5), Planet("mercury", 0.05), Planet("venus", 0.05), Planet("earth", 0.05), Planet("mars", 0.05), Planet("jupiter", 0.5), Planet("saturn", 0.5), Planet("uranus", 0.5), Planet("neptune", 0.5) };
+	planets = { Planet("Sun", 0.5), Planet("Mercury", 0.05), Planet("Venus", 0.05), Planet("Earth", 0.05), Planet("Mars", 0.05), Planet("Jupiter", 0.5), Planet("Saturn", 0.5), Planet("Uranus", 0.5), 
+		Planet("Neptune", 0.5) };
 	//planets = { Planet("sun", 0.5) };
 
 	glutInit(&argc, argv);
