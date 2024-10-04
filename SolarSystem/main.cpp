@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
+#define STB_IMAGE_IMPLEMENTATION
 
-#include <GL/glut.h>
+#include "glut.h"
 #include <algorithm>
 #include <iostream>
 #include <stdlib.h>
@@ -11,6 +12,8 @@
 #include <DataParser.h>
 #include <Planet.h>
 #include <DefaultCelestialBodyData.h>
+#include <direct.h>
+#include "model3DS.h"
 
 using namespace std;
 
@@ -28,16 +31,19 @@ static DateTime dateTime;
 
 list<Planet> planets;
 
-// View variables
+int selectedScene = 1;
 
-double rotation = 0.0;
+// View variables for detail scene
 
-float camX = 0.0;
-float camY = 0.0;
-float camZ = 500.0;
+int currentModel = 0;
+
+double camX = 0.0;
+double camY = 0.0;
+double camZ = 500.0;
+
+// Variables for main scene
 
 float distanceFromCenter = 500.0f;
-
 const float maxDistanceFromCenter = 490.0f;
 
 float lastMousePosX = 0.0;
@@ -47,6 +53,8 @@ float lastMouseZoomPos = 0.0f;
 
 float angleX = 0.0f;
 float angleY = 0.0f;
+
+float planetRotation = 0.0f;
 
 // Object variables
 
@@ -59,18 +67,181 @@ bool dateChangingMode = false;
 bool dateValueChanged = false;
 bool zoomInMode = false;
 
+// Load Models
+vector<string> currentModelList = { "mercurio","venus","earth","mars", "jupiter", "saturn", "uranus", "neptune"};
+
+map<string, vector<GLfloat>> planetColors = { {"Sun", {1.0f, 1.0f, 0.0f, 1.0f}}, {"Mercury", {0.55f, 0.55f, 0.4f, 1.0f}}, {"Venus", {1.0f, 0.5f, 0.0f, 1.0f}}, {"Earth", {0.5f, 0.5f, 1.0f, 1.0f}}, 
+{"Mars", {1.0f, 0.2f, 0.1f, 1.0f}}, {"Jupiter", {1.0f, 0.2f, 0.0f, 1.0f}}, {"Saturn", {0.9f, 0.8f, 0.2f, 1.0f}}, {"Uranus", {0.2f, 1.0f, 0.8f, 1.0f}}, {"Neptune", {0.0f, 0.0f, 1.0f, 1.0f}} };
+
+map<string, float> planetsRotationSpeed = { {"mercurio",0.01694915254},{"venus",0.004115226337 },{"earth",1.0},{"mars",0.9749492214}, {"jupiter",2.4}, {"saturn",2.28571428571}, {"uranus",1.39534883721}, {"neptune",1.49068322981}};
+
+struct model_w_skladzie {
+	char* filename;
+	model3DS* model;
+	struct model_w_skladzie* wsk;
+};
+struct model_w_skladzie* sklad_modeli = NULL;
+
+void dodajModel(model3DS* _model, char* file_name)
+{
+	struct model_w_skladzie* tmp;
+	tmp = (struct model_w_skladzie*)malloc(sizeof(struct model_w_skladzie));
+	tmp->filename = (char*)malloc(strlen(file_name) + 1);
+	strcpy(tmp->filename, file_name);
+	tmp->model = _model;
+	tmp->wsk = sklad_modeli;
+	sklad_modeli = tmp;
+}
+
+model3DS* pobierzModel(char* file_name)
+{
+	struct model_w_skladzie* sklad_tmp = sklad_modeli;
+	while (sklad_tmp) {
+		if (!_stricmp(sklad_tmp->filename, file_name)) return sklad_tmp->model;
+		char file_name_full[_MAX_PATH];
+		strcpy(file_name_full, file_name);
+		strcat(file_name_full, ".3ds");
+		if (!_stricmp(sklad_tmp->filename, file_name_full)) return sklad_tmp->model;
+
+		sklad_tmp = sklad_tmp->wsk;
+	}
+	return NULL;
+}
+
+void rysujModel(char* file_name, int tex_num = -1)
+{
+	model3DS* model_tmp;
+	if (model_tmp = pobierzModel(file_name))
+		if (tex_num == -1)
+			model_tmp->draw();
+		else
+			model_tmp->draw(tex_num, false);
+
+}
+
+void aktywujSpecjalneRenderowanieModelu(char* file_name, int spec_id = 0)
+{
+	model3DS* model_tmp;
+	if (model_tmp = pobierzModel(file_name))
+		model_tmp->setSpecialTransform(spec_id);
+}
+
+void ladujModele()
+{
+	WIN32_FIND_DATA* fd;
+	HANDLE fh;
+	model3DS* model_tmp;
+	char directory[_MAX_PATH];
+	if (_getcwd(directory, _MAX_PATH) == NULL) return;
+	strcat(directory, "\\data\\*.3ds");
+
+	fd = (WIN32_FIND_DATA*)malloc(sizeof(WIN32_FIND_DATA));
+	fh = FindFirstFile((LPCSTR)directory, fd);
+	if (fh != INVALID_HANDLE_VALUE)
+		do {
+			if (fd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+				if (FindNextFile(fh, fd)) continue; else break;
+			}
+			char filename[_MAX_PATH];
+			strcpy(filename, "data\\");
+			strcat(filename, fd->cFileName);
+			model_tmp = new model3DS(filename, 1, false);
+			dodajModel(model_tmp, fd->cFileName);
+			printf("[3DS] Model '%s' stored\n", fd->cFileName);
+		} while (FindNextFile(fh, fd));
+}
+
+// ---
+
+void init(void) {
+	dateTime = DateTime();
+}
+
 void reshape(int width, int height) {
 	glMatrixMode(GL_PROJECTION);
-	gluPerspective(50.0, width / (GLfloat)height, 3.0, 1000.0);
+	gluPerspective(50.0, width / (GLfloat)height, 0.1, 1000.0);
 	glMatrixMode(GL_MODELVIEW);
 	gluLookAt(camX, camY, camZ,
 		0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0);
 }
 
-void init(void) { 
-	dateTime = DateTime();
-	cout << "init" << endl;
+void controlMainScene(unsigned char key) {
+	if (key == 'z' || key == 'x' || key == 'a' || key == 's' || key == 'q' || key == 'w') {
+		dateValueChanged = true;
+	}
+
+	switch (key) {
+	case 'z':
+		dateTime.increaseDay();
+		break;
+	case 'x':
+		dateTime.decreaseDay();
+		break;
+	case 'a':
+		dateTime.increaseMonth();
+		break;
+	case 's':
+		dateTime.decreaseMonth();
+		break;
+	case 'q':
+		dateTime.increaseYear();
+		break;
+	case 'w':
+		dateTime.decreaseYear();
+		break;
+	default:
+		break;
+	}
+
+	if (key == (char)13) {
+		dateChangingMode = true;
+		dateValueChanged = false;
+	}
+}
+
+void controlSecondaryScene(unsigned char key) {
+	switch (key) {
+	case '+':
+		planetRotation = 0;
+		if (currentModel < 7) currentModel++;
+		else currentModel = 0;
+		break;
+	case '-':
+		planetRotation = 0;
+		if (currentModel >= 1) currentModel--;
+		else currentModel = 7;
+		break;
+	case 'q':
+		if (planetRotation == 0) planetRotation = 359;
+		else planetRotation--;
+		break;
+	case 'w':
+		if (planetRotation == 360) planetRotation = 0;
+		else planetRotation++;
+		break;
+	default:
+		break;
+	}
+}
+
+void keyboard(unsigned char key, int x, int y) {
+	if (key == '1') {
+		distanceFromCenter = 500.0;
+		selectedScene = 1;
+	}
+	else if (key == '2') {
+		planetRotation = 0;
+		distanceFromCenter = 10.0;
+		selectedScene = 2;
+	}
+
+	if (selectedScene == 1) {
+		controlMainScene(key);
+	}
+	else if (selectedScene == 2) {
+		controlSecondaryScene(key);
+	}
 }
 
 void enableLighting() {
@@ -82,11 +253,12 @@ void enableLighting() {
 	GLfloat light_diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	glLightfv(GL_LIGHT0, GL_POSITION, light1_position);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, light_diffuse);
+
+	//glShadeModel(GL_FLAT);
 }
 
 void renderGUI() {
-
 	GLfloat x = 10.0f;
 	GLfloat y = 10.0f;
 
@@ -177,7 +349,7 @@ void renderTextNearObj(float objX, float objY, float objZ, void *font, string st
 }
 
 void renderPlanetName(float x, float y, float z, string name) {
-	if (name == "mercury" || name == "venus" || name == "earth" || name == "mars") {
+	if (name == "Mercury" || name == "Venus" || name == "Earth" || name == "Mars") {
 		if (distanceFromCenter < 100.0) {
 			renderTextNearObj(x, y, z, GLUT_BITMAP_HELVETICA_10, name);
 		}
@@ -189,7 +361,7 @@ void renderPlanetName(float x, float y, float z, string name) {
 void renderPlanetOrbit(float x, float y, float z) {
 	glPushMatrix();
 	glTranslatef(0, 0, 0);
-	glColor3f(1.0, 1.0, 1.0);
+	glColor3f(0.5, 0.5, 0.5);
 
 	double radius = sqrt(x*x + y*y);
 
@@ -212,12 +384,11 @@ void renderPlanet(Planet &planet) {
 
 	renderPlanetName(x, y, z, planet.getName());
 
-	enableLighting();
-
 	renderPlanetOrbit(x, y, 0.0f);
 
-	GLfloat red[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, red);
+	enableLighting();
+	
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, planetColors.at(planet.getName()).data());
 
 	glPushMatrix();
 	glColor3f(9.0, 9.0, 9.0);
@@ -228,7 +399,7 @@ void renderPlanet(Planet &planet) {
 	glDisable(GL_LIGHTING);
 }
 
-void renderMainScene(void) {
+void renderMainScene() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
@@ -256,6 +427,69 @@ void renderMainScene(void) {
 	}
 }
 
+void enableLightingForSecondaryScene() {
+
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_DEPTH_TEST);
+
+	GLfloat light1_position[] = { 300,300,300,1 };
+	GLfloat light_diffuse[] = { 0.9,0.9,0.9,1 };
+	GLfloat light_ambient[] = { 0,0,0,1 };
+
+	glLightfv(GL_LIGHT0, GL_POSITION, light1_position);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+
+
+	//glShadeModel(GL_FLAT);
+}
+
+void renderSecondaryScene() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glLoadIdentity();
+
+	gluLookAt(0.0f, 0.0f, distanceFromCenter,
+		0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 1.0f);
+
+	glRotatef(angleX, 1.0f, 0.0f, 0.0f);
+	glRotatef(angleY, 0.0f, 1.0f, 0.0f);
+
+	std::string planet = currentModelList.at(currentModel);//Changing planet
+	GLfloat angle = planetsRotationSpeed.at(planet) * 360 * DateTime::getDifference(DateTime(),dateTime);
+
+	if (planet == "venus") angle = 360 - angle;
+
+	char* charPtr = new char[planet.length() + 1]; 
+	std::strcpy(charPtr, planet.c_str());
+
+	enableLightingForSecondaryScene();
+
+	glPushMatrix();
+	glTranslatef(0.0f, 0.0f, 0.0f);
+	glRotatef(angle+planetRotation, 0, 1, 0);
+	rysujModel(charPtr);
+	glPopMatrix();
+
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+
+	glutSwapBuffers();
+	glutPostRedisplay();
+}
+
+void display(void) {
+	if (selectedScene == 1) {
+		renderMainScene();
+	}
+	else if (selectedScene == 2) {
+		renderSecondaryScene();
+	}
+}
+
 void mouse(int button, int state, int x, int y) {
 	if (button == GLUT_RIGHT_BUTTON) {
 		if (state == GLUT_DOWN) {
@@ -269,46 +503,22 @@ void mouse(int button, int state, int x, int y) {
 	}
 }
 
-void keyboard(unsigned char key, int x, int y) {
-	if (key == 'z' || key == 'x' || key == 'a' || key == 's' || key == 'q' || key == 'w') {
-		dateValueChanged = true;
-	}
-
-	switch (key) {
-	case 'z':
-		dateTime.increaseDay();
-		break;
-	case 'x':
-		dateTime.decreaseDay();
-		break;
-	case 'a':
-		dateTime.increaseMonth();
-		break;
-	case 's':
-		dateTime.decreaseMonth();
-		break;
-	case 'q':
-		dateTime.increaseYear();
-		break;
-	case 'w':
-		dateTime.decreaseYear();
-		break;
-	default:
-		break;
-	}
-
-	if (key == (char)13) {
-		dateChangingMode = true;
-		dateValueChanged = false;
-	}
-}
-
-void handleZoomIn(int mousePosY) {
+void handleMainZoomIn(int mousePosY) {
 	if (mousePosY > lastMouseZoomPos && distanceFromCenter < maxDistanceFromCenter) {
 		distanceFromCenter += 10.0f;
 	}
 	else if (mousePosY < lastMouseZoomPos && distanceFromCenter > 10.0f) {
 		distanceFromCenter -= 10.0f;
+	}
+	lastMouseZoomPos = mousePosY;
+}
+
+void handleDetailZoomIn(int mousePosY) {
+	if (mousePosY > lastMouseZoomPos && distanceFromCenter < 10.0f) {
+		distanceFromCenter += 0.1f;
+	}
+	else if (mousePosY < lastMouseZoomPos && distanceFromCenter > 3.5f) {
+		distanceFromCenter -= 0.1f;
 	}
 	lastMouseZoomPos = mousePosY;
 }
@@ -332,13 +542,25 @@ void handleMouseMovement(int x, int y) {
 		angleY += 360;
 	}
 
+	if (angleX >= 90) {
+		angleX = 90;
+	}
+	else if (angleX <= -90) {
+		angleX = -90;
+	}
+
 	lastMousePosX = x;
 	lastMousePosY = y;
 }
 
 void motion(int x, int y) {
 	if (zoomInMode) {
-		handleZoomIn(y);
+		if (selectedScene == 1) {
+			handleMainZoomIn(y);
+		}
+		else {
+			handleDetailZoomIn(y);
+		}
 		return;
 	}
 
@@ -347,16 +569,21 @@ void motion(int x, int y) {
 
 void displayWindow() {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_RGBA);
-	glutInitWindowSize(1600, 900);
+	glutInitWindowSize(1280, 720);
 	glutInitWindowPosition(10, 10);
 	glutCreateWindow("Solar System");
 	init();
+
 	glutMotionFunc(motion);
 	glutMouseFunc(mouse);
 	glutKeyboardFunc(keyboard);
-	glutDisplayFunc(renderMainScene);
+	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
+	
 	glEnable(GL_DEPTH_TEST);
+	gluLookAt(0, 0, 1, 0, 0, -1, 0, 1, 0);
+	ladujModele();
+
 	glutMainLoop();
 }
 
@@ -379,7 +606,8 @@ int main(int argc, char** argv) {
 	}*/
 
 	//planets = { Planet("sun", 0.5),  Planet("mercury", 0.1), Planet("jupiter", 0.5), Planet("saturn", 0.5), Planet("uranus", 0.5), Planet("neptune", 0.5) };
-	planets = { Planet("sun", 0.5), Planet("mercury", 0.05), Planet("venus", 0.05), Planet("earth", 0.05), Planet("mars", 0.05), Planet("jupiter", 0.5), Planet("saturn", 0.5), Planet("uranus", 0.5), Planet("neptune", 0.5) };
+	planets = { Planet("Sun", 0.5), Planet("Mercury", 0.05), Planet("Venus", 0.05), Planet("Earth", 0.05), Planet("Mars", 0.05), Planet("Jupiter", 0.5), Planet("Saturn", 0.5), Planet("Uranus", 0.5), 
+		Planet("Neptune", 0.5) };
 	//planets = { Planet("sun", 0.5) };
 
 	glutInit(&argc, argv);
